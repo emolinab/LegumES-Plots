@@ -515,7 +515,7 @@ dataPlotArea <- mbind(
   name_it(cropDataAreaInt$Soybean,    "Soybean"),
   name_it(cropDataAreaInt$Groundnuts, "Groundnuts"),
   name_it(cropDataAreaInt$Cereals, "Cereals"),
-  name_it(cropDataAreaInt$Total_Crops - cropDataAreaInt$Pulses - cropDataAreaInt$Soybean - cropDataAreaInt$Groundnuts - cropDataAreaInt$Cereals, "Other Crops"),
+  name_it(cropDataAreaInt$Total_Crops - cropDataAreaInt$Pulses - cropDataAreaInt$Soybean - cropDataAreaInt$Groundnuts - cropDataAreaInt$Cereals, "Other crops"),
   name_it(cropDataAreaInt$Forage, "Forage")
 )
 
