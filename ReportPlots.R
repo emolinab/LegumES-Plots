@@ -3,6 +3,7 @@ library(magclass)
 library(dplyr)
 library(patchwork)
 library(stringi)
+library(legendry)
 
 ## Set up scenarios and initial variables
 scenarios <- c("SSP1","SSP2","SSP3","SSP4","SSP5") 
@@ -69,8 +70,7 @@ data_list2 <- do.call(mbind, data_list_temp)
 
 ## Plotting functions
 
-plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, 
-                         palette = itemColors, width = 24, height = 24, highlight = NULL, line=FALSE){
+plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = itemColors, width = 24, height = 24, highlight = NULL, legendBreaks = NULL){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -84,19 +84,28 @@ plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder
   dfLong$Variable <- factor(dfLong$Variable, levels = names(palette)) # fix stacking/legend order
   dfLong$Region <- factor(dfLong$Region, levels = region) # enforce facet order (e.g. EUR first)
 
+## Nested x-axis: scenario tick + year bracket (2015 baseline vs SSP1-5 in 2050).
+## The 2015 bar gets a blank tick so the year only appears in the bracket row.
+  dfLong$Period <- ifelse(as.character(dfLong$Scenario) == "2015", "2015", "2050")
+  tickLab       <- ifelse(as.character(dfLong$Scenario) == "2015", "", as.character(dfLong$Scenario))
+  dfLong$xNest  <- factor(paste(tickLab, dfLong$Period, sep = "@"),
+                          levels = c("@2015", paste0(scenarios, "@2050")))
+
 ## Plotting and save functions
-plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
+plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
    geom_col(data = filter(dfLong, Value >= 0), position = "stack", color = "white", linewidth = 0.3) +
     geom_col(data = filter(dfLong, Value < 0), position = "stack", color = "white", linewidth = 0.3) +
+    geom_hline(yintercept = 0, colour = "grey30", linewidth = 0.4) +
 
-    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
+    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70",
+                      breaks = if (is.null(legendBreaks)) ggplot2::waiver() else legendBreaks) +
     guides(fill = guide_legend(ncol = 1)) +
     theme_minimal(base_family = "sans", base_size = 20) +
     theme(
       plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
       axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
       axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20),
+      axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1, size = 20),
       axis.text.y = element_text(size = 20),
       strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
       legend.position = "right",
@@ -107,10 +116,15 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
       panel.spacing = unit(1.5, "lines"),
       plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
     ) +
-    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") + 
+    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") +
+    scale_x_discrete(guide = legendry::guide_axis_nested(
+                       drop_zero = FALSE,                                # draw the single 2015 bracket line
+                       levels_text = list(
+                         element_text(angle = 60, hjust = 1, vjust = 1), # scenario ticks: steep
+                         element_text(angle = 0,  hjust = 0.5)))) +      # year brackets: horizontal
     labs(title = title,
          y = units, 
-         x = "Scenario", 
+         x = NULL,
          fill = "Item")
 
   ## Optional: draw a frame around one facet to highlight it (e.g. EUR)
@@ -134,8 +148,7 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, 
-                         width = 24, height = 24, highlight = NULL, line= FALSE){
+plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, width = 24, height = 24, highlight = NULL, legendBreaks = NULL){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -150,17 +163,25 @@ plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder
   dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
   dfLong$Variable <- factor(dfLong$Variable, levels = names(palette)) # fix stacking/legend order
 
+## Nested x-axis: scenario tick + year bracket (2015 baseline vs SSP1-5 in 2050).
+## The 2015 bar gets a blank tick so the year only appears in the bracket row.
+  dfLong$Period <- ifelse(as.character(dfLong$Scenario) == "2015", "2015", "2050")
+  tickLab       <- ifelse(as.character(dfLong$Scenario) == "2015", "", as.character(dfLong$Scenario))
+  dfLong$xNest  <- factor(paste(tickLab, dfLong$Period, sep = "@"),
+                          levels = c("@2015", paste0(scenarios, "@2050")))
+
 ## Plotting and save functions
-plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
+plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
       geom_col(data = filter(dfLong, Value >= 0), position = "stack", color = "white", linewidth = 0.3) +
     geom_col(data = filter(dfLong, Value < 0), position = "stack", color = "white", linewidth = 0.3) +
-    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
+    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70",
+                      breaks = if (is.null(legendBreaks)) ggplot2::waiver() else legendBreaks) +
     theme_minimal(base_family = "sans", base_size = 20) +
     theme(
       plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
       axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
       axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20),
+      axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1, size = 20),
       axis.text.y = element_text(size = 20),
       strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
       legend.position = "right",
@@ -171,10 +192,15 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
       panel.spacing = unit(1.5, "lines"),
       plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
     ) +
-    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") + 
+    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") +
+    scale_x_discrete(guide = legendry::guide_axis_nested(
+                       drop_zero = FALSE,                                # draw the single 2015 bracket line
+                       levels_text = list(
+                         element_text(angle = 60, hjust = 1, vjust = 1), # scenario ticks: steep
+                         element_text(angle = 0,  hjust = 0.5)))) +      # year brackets: horizontal
     labs(title = title,
          y = units, 
-         x = "Scenario", 
+         x = NULL,
          fill = "Item")
 
   ## Optional: draw a frame around one facet to highlight it (e.g. EUR)
@@ -382,6 +408,94 @@ plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Produ
 plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (legumes)", "Mt DM/yr", c("EUR", EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26, highlight = "EUR")
 
 #####################################################################################
+
+
+###### Cropland Nitrogen Budget ######################################################
+## Diverging stacked bar: Inputs positive; Withdrawals + Balance (Surplus, Soil
+## Organic Matter, Balanceflow) negative. Budget closes (Inputs = Withdrawals +
+## Balance), so the positive and negative extents mirror each other.
+nbNames <- c(
+  fertilizer  = "Resources|Nitrogen|Cropland Budget|Inputs|+|Fertilizer (Mt Nr/yr)",
+  manure_conf = "Resources|Nitrogen|Cropland Budget|Inputs|+|Manure Recycled from Confinements (Mt Nr/yr)",
+  manure_stub = "Resources|Nitrogen|Cropland Budget|Inputs|+|Manure From Stubble Grazing (Mt Nr/yr)",
+  res_ag_in   = "Resources|Nitrogen|Cropland Budget|Inputs|+|Recycled Aboveground Crop Residues (Mt Nr/yr)",
+  res_bg_in   = "Resources|Nitrogen|Cropland Budget|Inputs|+|Recycled Belowground Crop Residues (Mt Nr/yr)",
+  fix_symb    = "Resources|Nitrogen|Cropland Budget|Inputs|+|Biological Fixation Symbiotic Crops (Mt Nr/yr)",
+  fix_free    = "Resources|Nitrogen|Cropland Budget|Inputs|+|Biological Fixation Freeliving Microorganisms (Mt Nr/yr)",
+  deposition  = "Resources|Nitrogen|Cropland Budget|Inputs|+|Atmospheric Deposition (Mt Nr/yr)",
+  seed        = "Resources|Nitrogen|Cropland Budget|Inputs|+|Seed (Mt Nr/yr)",
+  ash         = "Resources|Nitrogen|Cropland Budget|Inputs|+|Ash from Burned Crop Residues (Mt Nr/yr)",
+  harvested   = "Resources|Nitrogen|Cropland Budget|Withdrawals|+|Harvested Crops (Mt Nr/yr)",
+  res_ag_out  = "Resources|Nitrogen|Cropland Budget|Withdrawals|+|Aboveground Crop Residues (Mt Nr/yr)",
+  res_bg_out  = "Resources|Nitrogen|Cropland Budget|Withdrawals|+|Belowground Crop Residues (Mt Nr/yr)",
+  surplus     = "Resources|Nitrogen|Cropland Budget|Balance|+|Nutrient Surplus (Mt Nr/yr)",
+  som         = "Resources|Nitrogen|Cropland Budget|Balance|+|Soil Organic Matter (Mt Nr/yr)",
+  balanceflow = "Resources|Nitrogen|Cropland Budget|Balance|+|Balanceflow (Mt Nr/yr)"
+)
+
+nbData <- data_list2[, years, c(nbNames)]
+nbInt  <- lapply(nbNames, \(x) nbData[, , x])
+
+dataPlotNB <- mbind(
+  ## Inputs (positive)
+  name_it(nbInt$fertilizer,  "Fertilizer"),
+  name_it(nbInt$manure_conf, "Manure from confinements"),
+  name_it(nbInt$manure_stub, "Manure from stubble grazing"),
+  name_it(nbInt$res_ag_in,   "Recycled aboveground residues"),
+  name_it(nbInt$res_bg_in,   "Recycled belowground residues"),
+  name_it(nbInt$fix_symb,    "Legume symbiotic fixation"),
+  name_it(nbInt$fix_free,    "Free-living fixation"),
+  name_it(nbInt$deposition,  "Atmospheric deposition"),
+  name_it(nbInt$seed,        "Seed"),
+  name_it(nbInt$ash,         "Ash from burned residues"),
+  ## Withdrawals (negative)
+  name_it(-nbInt$harvested,  "Harvested crops"),
+  name_it(-nbInt$res_ag_out, "Aboveground residues removed"),
+  name_it(-nbInt$res_bg_out, "Belowground residues removed"),
+  ## Balance (negative)
+  name_it(-nbInt$surplus,    "Nutrient surplus"),
+  name_it(-nbInt$som,        "Soil organic matter"),
+  name_it(-nbInt$balanceflow,"Balanceflow")
+)
+
+## Colours by content: blues = synthetic/atmospheric, browns/khaki = organic
+## recycling, greens = biological fixation, oranges = crop offtake, red = losses,
+## greys = soil/calibration. Order = stacking order within each side.
+nitrogenColors <- c(
+  "Fertilizer"                    = "#3182BD",  # blue (synthetic)
+  "Manure from confinements"      = "#8C510A",  # dark brown
+  "Manure from stubble grazing"   = "#BF812D",  # medium brown
+  "Recycled aboveground residues" = "#DFC27D",  # light khaki
+  "Recycled belowground residues" = "#998A3C",  # dark khaki
+  "Legume symbiotic fixation"     = "#238B45",  # strong green (legumes)
+  "Free-living fixation"          = "#99D8C9",  # light teal-green
+  "Atmospheric deposition"        = "#6BAED6",  # sky blue
+  "Seed"                          = "#807DBA",  # purple
+  "Ash from burned residues"      = "#BDBDBD",  # light grey
+  ## Withdrawals + balance (negative), ordered bottom -> top toward zero
+  "Nutrient surplus"              = "#E41A1C",  # red (losses) - bottom
+  "Soil organic matter"           = "#525252",  # dark grey (soil storage)
+  "Balanceflow"                   = "#969696",  # medium grey (calibration)
+  "Belowground residues removed"  = "#A6611A",  # brown
+  "Aboveground residues removed"  = "#FFD92F",  # yellow
+  "Harvested crops"               = "#41AB5D"   # green (offtake) - nearest zero
+)
+
+## Legend should read top -> bottom in the same visual order as the stacked bar
+nbLegendOrder <- c(
+  "Fertilizer", "Manure from confinements", "Manure from stubble grazing",
+  "Recycled aboveground residues", "Recycled belowground residues",
+  "Legume symbiotic fixation", "Free-living fixation", "Atmospheric deposition",
+  "Seed", "Ash from burned residues", "Soil organic matter",
+  "Harvested crops", "Aboveground residues removed", "Belowground residues removed",
+  "Balanceflow", "Nutrient surplus"
+)
+
+plotsReport[["nitrogenBudget"]] <- plotBars2Var(dataPlotNB, years, "Cropland Nitrogen Budget", "Mt Nr/yr", "EUR", ncol=3, fileFolder = fileFolder, facetVar="Region", palette = nitrogenColors, width = 30, height = 28, legendBreaks = nbLegendOrder)
+
+#####################################################################################
+
+
 ###### Crop area #####################################################################
 CropNamesArea <- c(
   Pulses      = "Resources|Land Cover|Cropland|Croparea|Crops|Other crops|+|Pulses (million ha)",
