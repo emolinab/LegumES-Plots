@@ -51,6 +51,13 @@ demandColors <- c(
   "Bioenergy"  = "#E7298A"   # magenta
 )
 
+tradeColors <- c(
+  "Imports"       = "#E6AB02",  # green
+  "Exports"       = "#1D91C0",  # orange
+  "Demand"        = "#CAB2D6"  # purple
+
+)
+
 ## Read and combine report.mifs
 data_list_temp <- lapply(scenarios, function(sce) {
   data <- read.report(runsReport[sce])[[1]][[1]]
@@ -62,11 +69,15 @@ data_list2 <- do.call(mbind, data_list_temp)
 
 ## Plotting functions
 
-plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = itemColors, width = 24, height = 24, highlight = NULL){
+plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, 
+                         palette = itemColors, width = 24, height = 24, highlight = NULL, line=FALSE){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
-  dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]), paste0(as.character(years[1]),".", getNames(dataVariableSingle, dim = 2))),dataVariableSingle[,years[1],,invert = TRUE])
+  dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]), paste0(as.character(years[1]),".", 
+  getNames(dataVariableSingle, dim = 2))),dataVariableSingle[,years[1],,invert = TRUE])
+  
+  
   dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Value")]
   names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Value") # Layout estándar de magclass
   dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
@@ -75,7 +86,8 @@ plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder
 
 ## Plotting and save functions
 plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
-    geom_bar(stat = "identity", position = "stack", color = "white", linewidth = 0.3) +
+   geom_col(data = filter(dfLong, Value >= 0), position = "stack", color = "white", linewidth = 0.3) +
+    geom_col(data = filter(dfLong, Value < 0), position = "stack", color = "white", linewidth = 0.3) +
 
     scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
     guides(fill = guide_legend(ncol = 1)) +
@@ -122,13 +134,16 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, width = 24, height = 24, highlight = NULL){
+plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, 
+                         width = 24, height = 24, highlight = NULL, line= FALSE){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
-  dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]),
-  paste0(as.character(years[1]),".", as.vector(outer(getNames(dataVariableSingle, dim = 2), getNames(dataVariableSingle, dim = 3), paste, sep = ".")))),
-  dataVariableSingle[,years[1],,invert = TRUE])
+
+  dataVariableSingleHist <-setYears(dataVariableSingle[,years[1],"SSP1"],years[2])
+  getNames(dataVariableSingleHist) <- gsub("^SSP1\\.", paste0(years[1], "."), getNames(dataVariableSingleHist))
+
+  dataVariableSingle <- mbind(dataVariableSingleHist, dataVariableSingle[,years[1],,invert = TRUE])
 
   dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Data3","Value")]
   names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Item","Value") # Layout estándar de magclass
@@ -137,7 +152,8 @@ plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder
 
 ## Plotting and save functions
 plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
-    geom_bar(stat = "identity", position = "stack", color = "white", linewidth = 0.3) +
+      geom_col(data = filter(dfLong, Value >= 0), position = "stack", color = "white", linewidth = 0.3) +
+    geom_col(data = filter(dfLong, Value < 0), position = "stack", color = "white", linewidth = 0.3) +
     scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
     theme_minimal(base_family = "sans", base_size = 20) +
     theme(
@@ -393,3 +409,53 @@ plotsReport[["cropArea"]] <- plotBars2Var(dataPlotArea, years, "Crop Area", "Mil
 plotsReport[["cropAreaPulses"]] <- plotBars2Var(dataPlotArea[,,c("Pulses", "Soybean", "Groundnuts")], years, "Crop Area (Pulses)", "Million ha", "EUR", ncol=3,fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
+###### Trade #####################################################################
+
+ TradeNames <- c(
+  Demand.Pulses ="Demand|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  Exports.Pulses = "Trade|Exports|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  Imports.Pulses = "Trade|Imports|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  Production.Pulses = "Production|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  
+  Demand.Soybeans = "Demand|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+  Exports.Soybeans = "Trade|Exports|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+  Imports.Soybeans = "Trade|Imports|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+  Production.Soybeans = "Production|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+  
+  Demand.Oils = "Demand|Crops|+|Oil crops (Mt DM/yr)",
+  Exports.Oils = "Trade|Exports|Crops|+|Oil crops (Mt DM/yr)",
+  Imports.Oils = "Trade|Imports|Crops|+|Oil crops (Mt DM/yr)",
+  Production.Oils = "Production|Crops|+|Oil crops (Mt DM/yr)",
+
+  Demand.Oilcakes = "Demand|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Exports.Oilcakes = "Trade|Exports|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Imports.Oilcakes = "Trade|Imports|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Production.Oilcakes = "Production|Secondary products|+|Oilcakes (Mt DM/yr)",
+
+  Demand.Crops = "Demand|++|Crops (Mt DM/yr)",
+  Exports.Crops = "Trade|Exports|+|Crops (Mt DM/yr)",
+  Imports.Crops = "Trade|Imports|+|Crops (Mt DM/yr)",
+  Production.Crops = "Production|+|Crops (Mt DM/yr)",
+
+  Demand.Livestock = "Demand|++|Livestock products (Mt DM/yr)",
+  Exports.Livestock = "Trade|Exports|+|Livestock products (Mt DM/yr)",
+  Imports.Livestock = "Trade|Imports|+|Livestock products (Mt DM/yr)",
+  Production.Livestock = "Production|+|Livestock products (Mt DM/yr)"
+)
+
+TradeData <- data_list2[, years, c(TradeNames)] 
+TradeData[TradeData<0] <- 0
+
+getNames(TradeData) <- stri_replace_all_fixed(
+  str = getNames(TradeData),          
+  pattern = TradeNames,                
+  replacement = names(TradeNames),    
+  vectorize_all = FALSE
+)
+
+TradeData <- mbind(TradeData[,,c("Exports","Demand","Production")],
+                   (- TradeData[,,c("Imports")]))
+
+
+plotsReport[["Trade"]] <- plotBars3Var(TradeData[,,c("Demand","Exports","Imports")], years, "Trade", "Mt DM/yr", "EUR", ncol=3, fileFolder, facetVar="Item", width = 34, height = 26, palette=tradeColors)
+##################################################################################### ,"Imports"
