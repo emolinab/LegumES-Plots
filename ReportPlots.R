@@ -8,7 +8,7 @@ library(stringi)
 ## Set up scenarios and initial variables
 scenarios <- c("SSP1","SSP2","SSP3","SSP4","SSP5") 
 
-rm(data_list2)
+suppressWarnings(rm(data_list2))
 runs <- c(SSP1 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP1_2026-06-03_08.39.09/",
           SSP2 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP2_2026-06-03_08.10.28/",
           SSP3 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP3_2026-06-03_08.17.58/",
@@ -30,7 +30,7 @@ data_list2 <- do.call(mbind, data_list_temp)
 
 ## Plotting functions
 
-plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder){
+plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -60,7 +60,7 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
       panel.spacing = unit(1.5, "lines"),
       plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
     ) +
-    facet_wrap(~ Region, ncol = ncol, scales = "free_y") + 
+    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") + 
     labs(title = title,
          y = units, 
          x = "Scenario", 
@@ -78,7 +78,7 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder){
+plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -110,7 +110,7 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
       panel.spacing = unit(1.5, "lines"),
       plot.margin = margin(t = 15, r = 15, b = 15, l = 15)
     ) +
-    facet_wrap(~ Item, ncol = ncol, scales = "free_y") + 
+    facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") + 
     labs(title = title,
          y = units, 
          x = "Scenario", 
@@ -166,8 +166,8 @@ dataPlot <- mbind(
           "Other livestock \n products")
 )
 
-plotsReport[["foodDemand"]] <- plotBars2Var(dataPlot, years, "Food Demand", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder)
-plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean","Groundnuts")], years, "Food Demand Pulses", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder)
+plotsReport[["foodDemand"]] <- plotBars2Var(dataPlot, years, "Food Demand", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean","Groundnuts")], years, "Food Demand Pulses", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
 
@@ -211,7 +211,7 @@ getNames(pulsesDemand) <- stri_replace_all_fixed(
   vectorize_all = FALSE              
 )
 
-plotsReport[["generalDemandPulses"]] <- plotBars3Var(pulsesDemand , years, "Pulses Demand", "Mt DM/yr", "EUR", ncol=2, fileFolder)
+plotsReport[["generalDemandPulses"]] <- plotBars3Var(pulsesDemand , years, "Pulses Demand", "Mt DM/yr", "EUR", ncol=2, fileFolder, facetVar="Item")
 
 
 #####################################################################################
