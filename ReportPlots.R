@@ -18,6 +18,7 @@ runs <- c(SSP1 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpie
 runsReport <-setNames(paste0(runs,"report.mif"),names(runs))
 years <- c(2015,2050)
 plotsReport <- list()
+EUR_Regions<- c("DEU", "EUC", "EUN", "EUS", "EUW")
 
 ## Read and combine report.mifs
 data_list_temp <- lapply(scenarios, function(sce) {
@@ -218,6 +219,29 @@ plotsReport[["generalDemandPulses"]] <- plotBars3Var(pulsesDemand , years, "Puls
 
 
 ###### General Crop production #####################################################################
+CropNames <- c(
+  Pulses      = "Production|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  Soybean     = "Production|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+  Groundnuts  = "Production|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+  Forage      = "Production|+|Forage (Mt DM/yr)",
+  Cereals     = "Production|Crops|+|Cereals (Mt DM/yr)",
+  Total_Crops = "Production|+|Crops (Mt DM/yr)"
+)
 
+cropData <- data_list2[, years, c(CropNames)]   
+
+cropDataInt <- lapply(CropNames, \(x) cropData[, , x])
+
+dataPlotProd <- mbind(
+  name_it(cropDataInt$Pulses,     "Pulses"),
+  name_it(cropDataInt$Soybean,    "Soybean"),
+  name_it(cropDataInt$Groundnuts, "Groundnuts"),
+  name_it(cropDataInt$Cereals, "Cereals"),
+  name_it(cropDataInt$Total_Crops - cropDataInt$Pulses - cropDataInt$Soybean - cropDataInt$Groundnuts - cropDataInt$Cereals, "Other Crops"),
+  name_it(cropDataInt$Forage, "Forage")
+)
+
+plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Production", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (Pulses)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
