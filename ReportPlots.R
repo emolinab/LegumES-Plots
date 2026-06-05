@@ -241,7 +241,21 @@ plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean
   Seed.Forage = "Demand|Seed|+|Forage (Mt DM/yr)",
   Material.Forage = "Demand|Material|+|Forage (Mt DM/yr)",
   Processing.Forage = "Demand|Processing|+|Forage (Mt DM/yr)",
-  Bioenergy.Forage = "Demand|Bioenergy|+|Forage (Mt DM/yr)"
+  Bioenergy.Forage = "Demand|Bioenergy|+|Forage (Mt DM/yr)",
+
+  Food.Oils = "Demand|Food|Secondary products|+|Oils (Mt DM/yr)",
+  Feed.Oils = "Demand|Feed|Secondary products|+|Oils (Mt DM/yr)",
+  Material.Oils = "Demand|Material|Secondary products|+|Oils (Mt DM/yr)",
+  Seed.Oils = "Demand|Seed|Secondary products|+|Oils (Mt DM/yr)",
+  Processing.Oils = "Demand|Processing|Secondary products|+|Oils (Mt DM/yr)",
+  Bioenergy.Oils = "Demand|Bioenergy|Secondary products|+|Oils (Mt DM/yr)",
+
+  Food.Oilcakes = "Demand|Food|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Feed.Oilcakes = "Demand|Feed|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Material.Oilcakes = "Demand|Material|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Seed.Oilcakes = "Demand|Seed|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Processing.Oilcakes = "Demand|Processing|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Bioenergy.Oilcakes = "Demand|Bioenergy|Secondary products|+|Oilcakes (Mt DM/yr)"
 )
 
 pulsesDemand <- data_list2[, years, c(PulsesNames)]   
@@ -249,10 +263,15 @@ getNames(pulsesDemand) <- stri_replace_all_fixed(
   str = getNames(pulsesDemand),          
   pattern = PulsesNames,                
   replacement = names(PulsesNames ),    
-  vectorize_all = FALSE              
+  vectorize_all = FALSE
 )
 
-plotsReport[["generalDemandPulses"]] <- plotBars3Var(pulsesDemand , years, "Pulses Demand", "Mt DM/yr", "EUR", ncol=2, fileFolder, facetVar="Item")
+## Special rule: oils are an intermediate product when "processed", so drop the
+## Processing category for Oils only (avoids double-counting). Zeroed rather than
+## removed to keep the use-type x commodity cross complete for plotBars3Var.
+pulsesDemand[, , grep("\\.Processing\\.Oils$", getNames(pulsesDemand), value = TRUE)] <- 0
+
+plotsReport[["generalDemandPulses"]] <- plotBars3Var(pulsesDemand , years, "Legumes Demand by Use Type", "Mt DM/yr", "EUR", ncol=3, fileFolder, facetVar="Item", width = 34, height = 26)
 
 
 #####################################################################################
