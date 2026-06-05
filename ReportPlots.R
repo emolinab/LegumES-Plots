@@ -2,22 +2,53 @@ library(ggplot2)
 library(magclass)
 library(dplyr)
 library(patchwork)
-library(officer)
 library(stringi)
 
 ## Set up scenarios and initial variables
 scenarios <- c("SSP1","SSP2","SSP3","SSP4","SSP5") 
 
 suppressWarnings(rm(data_list2))
-runs <- c(SSP1 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP1_2026-06-03_08.39.09/",
-          SSP2 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP2_2026-06-03_08.10.28/",
-          SSP3 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP3_2026-06-03_08.17.58/",
-          SSP4 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP4_2026-06-03_08.25.44/",
-          SSP5 = "/p/projects/landuse/users/mbacca/Collaborations/LegumES/magpieSSP2_5/magpie/output/LegumES-H16EU-SSP5_2026-06-03_08.33.38/")    
-
-runsReport <-setNames(paste0(runs,"report.mif"),names(runs))
+runsReport <- setNames(
+  file.path("DataRunsLegumES", paste0("report_", tolower(scenarios), ".mif")),
+  scenarios)
 years <- c(2015,2050)
 plotsReport <- list()
+
+## ---------------------------------------------------------------------------
+## Common colour coding (shared across all plots for consistency)
+## Vector order = stacking order in the bars: neighbours are chosen to differ
+## in both hue and lightness. Central commodities (Pulses, Soybean, Groundnuts,
+## Oils, Oilcakes, Forage) get strong, intuitive, saturated colours; aggregate
+## "other" categories are kept muted so the central commodities stand out.
+## ---------------------------------------------------------------------------
+itemColors <- c(
+  ## Crops
+  "Pulses"                                  = "#7F4F24",  # brown
+  "Soybean"                                 = "#1B9E77",  # teal-green
+  "Groundnuts"                              = "#FFD92F",  # yellow
+  "Cereals"                                 = "#C8B68F",  # muted tan
+  "Other crops"                             = "#9C8AA5",  # muted mauve-grey
+  ## Primary processed products (between crops and animal products)
+  "Oils"                                    = "#FF7F00",  # orange
+  "Sugar and other \n primary processed \n products" = "#9E9E9E",  # grey
+  ## Livestock
+  "Ruminant meat"                           = "#E41A1C",  # red
+  "Dairy"                                   = "#A6CEE3",  # light blue
+  "Other livestock \n products"             = "#FB9A99",  # salmon
+  ## Further central commodities (used in other plots, kept consistent)
+  "Oilcakes"                                = "#B15928",  # sienna
+  "Forage"                                  = "#4DAF4A"   # green
+)
+
+## Demand categories (purpose of demand), shared across plots
+demandColors <- c(
+  "Food"       = "#4DAF4A",  # green
+  "Feed"       = "#FF7F00",  # orange
+  "Material"   = "#6A3D9A",  # purple
+  "Seed"       = "#A6761D",  # brown
+  "Processing" = "#377EB8",  # blue
+  "Bioenergy"  = "#E7298A"   # magenta
+)
 
 ## Read and combine report.mifs
 data_list_temp <- lapply(scenarios, function(sce) {
@@ -30,31 +61,33 @@ data_list2 <- do.call(mbind, data_list_temp)
 
 ## Plotting functions
 
-plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar){
+plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = itemColors){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
   dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]), paste0(as.character(years[1]),".", getNames(dataVariableSingle, dim = 2))),dataVariableSingle[,years[1],,invert = TRUE])
-  dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Value")] 
+  dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Value")]
   names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Value") # Layout estándar de magclass
   dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
+  dfLong$Variable <- factor(dfLong$Variable, levels = names(palette)) # fix stacking/legend order
 
 ## Plotting and save functions
 plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
     geom_bar(stat = "identity", position = "stack", color = "white", linewidth = 0.3) +
-    
-    scale_fill_brewer(palette = "Paired") +
-    theme_minimal(base_family = "sans", base_size = 12) +
+
+    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
+    guides(fill = guide_legend(ncol = 1)) +
+    theme_minimal(base_family = "sans", base_size = 20) +
     theme(
-      plot.title = element_text(face = "bold", hjust = 0.5, size = 20, margin = margin(b = 15)),
-      axis.title.x = element_text(face = "bold", size = 16, margin = margin(t = 12)),
-      axis.title.y = element_text(face = "bold", size = 16, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 10),
-      axis.text.y = element_text(size = 10),
-      strip.text = element_text(size = 12, face = "bold", margin = margin(b = 8)),
-      legend.position = "bottom",
-      legend.title = element_text(face = "bold", size = 12),
-      legend.text = element_text(size = 10),
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
+      axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
+      axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
+      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20),
+      axis.text.y = element_text(size = 20),
+      strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
+      legend.position = "right",
+      legend.title = element_text(face = "bold", size = 22),
+      legend.text = element_text(size = 20),
       panel.grid.minor = element_blank(),
       panel.grid.major.x = element_blank(),
       panel.spacing = unit(1.5, "lines"),
@@ -69,8 +102,8 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
     ggsave(
     filename =  paste0(fileFolder, title,".png"),
     plot = plot,
-    width = 20,
-    height = 20,
+    width = 24,
+    height = 24,
     dpi = 320,
     units = "cm"
   )
@@ -78,33 +111,34 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar){
+plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
-  dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]), 
+  dataVariableSingle <- mbind(setNames(setYears(dataVariableSingle[,years[1],"SSP1"],years[2]),
   paste0(as.character(years[1]),".", as.vector(outer(getNames(dataVariableSingle, dim = 2), getNames(dataVariableSingle, dim = 3), paste, sep = ".")))),
   dataVariableSingle[,years[1],,invert = TRUE])
 
-  dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Data3","Value")] 
+  dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Data3","Value")]
   names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Item","Value") # Layout estándar de magclass
   dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
-  
+  dfLong$Variable <- factor(dfLong$Variable, levels = names(palette)) # fix stacking/legend order
+
 ## Plotting and save functions
 plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
-    geom_bar(stat = "identity", position = "stack", color = "white", linewidth = 0.3) +    
-    scale_fill_brewer(palette = "Paired") +
-    theme_minimal(base_family = "sans", base_size = 12) +
+    geom_bar(stat = "identity", position = "stack", color = "white", linewidth = 0.3) +
+    scale_fill_manual(values = palette, drop = TRUE, na.value = "grey70") +
+    theme_minimal(base_family = "sans", base_size = 20) +
     theme(
-      plot.title = element_text(face = "bold", hjust = 0.5, size = 20, margin = margin(b = 15)),
-      axis.title.x = element_text(face = "bold", size = 16, margin = margin(t = 12)),
-      axis.title.y = element_text(face = "bold", size = 16, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 10),
-      axis.text.y = element_text(size = 10),
-      strip.text = element_text(size = 12, face = "bold", margin = margin(b = 8)),
-      legend.position = "bottom",
-      legend.title = element_text(face = "bold", size = 12),
-      legend.text = element_text(size = 10),
+      plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
+      axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
+      axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
+      axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1, size = 20),
+      axis.text.y = element_text(size = 20),
+      strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
+      legend.position = "right",
+      legend.title = element_text(face = "bold", size = 22),
+      legend.text = element_text(size = 20),
       panel.grid.minor = element_blank(),
       panel.grid.major.x = element_blank(),
       panel.spacing = unit(1.5, "lines"),
@@ -119,8 +153,8 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
     ggsave(
     filename =  paste0(fileFolder, title,".png"),
     plot = plot,
-    width = 20,
-    height = 20,
+    width = 24,
+    height = 24,
     dpi = 320,
     units = "cm"
   )
@@ -130,20 +164,21 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
 
 ###### General Food demand #####################################################################
 
-fileFolder<-"/p/projects/landuse/users/mbacca/Collaborations/LegumES/LegumES-Plots/Report/Plots/"
+fileFolder<-"Report/Plots/"
 foodNames <- c(
   pulses      = "Demand|Food|Crops|Other crops|+|Pulses (Mt DM/yr)",
   soybean     = "Demand|Food|Crops|Oil crops|+|Soybean (Mt DM/yr)",
   groundnuts  = "Demand|Food|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
-  tot_oil     = "Demand|Food|Crops|+|Oil crops (Mt DM/yr)",
   cereals     = "Demand|Food|Crops|+|Cereals (Mt DM/yr)",
   tot_crops   = "Demand|Food|+|Crops (Mt DM/yr)",
   ruminant    = "Demand|Livestock products|+|Ruminant meat (Mt DM/yr)",
   dairy       = "Demand|Livestock products|+|Dairy (Mt DM/yr)",
-  tot_livestk = "Demand|Food|+|Livestock products (Mt DM/yr)"
+  tot_livestk = "Demand|Food|+|Livestock products (Mt DM/yr)",
+  oils        = "Demand|Food|Secondary products|+|Oils (Mt DM/yr)",
+  tot_sec     = "Demand|Food|+|Secondary products (Mt DM/yr)"
 )
 
-foodData <- data_list2[, years, c(foodNames)]   
+foodData <- data_list2[, years, c(foodNames)]
 
 fooDataInt <- lapply(foodNames, \(x) foodData[, , x])
 
@@ -155,15 +190,20 @@ dataPlot <- mbind(
   name_it(fooDataInt$pulses,     "Pulses"),
   name_it(fooDataInt$soybean,    "Soybean"),
   name_it(fooDataInt$groundnuts, "Groundnuts"),
-  name_it(fooDataInt$tot_oil - fooDataInt$soybean - fooDataInt$groundnuts,
-          "Other oil crops"),
   name_it(fooDataInt$cereals,    "Cereals"),
-  name_it(fooDataInt$tot_crops - fooDataInt$cereals - fooDataInt$tot_oil - fooDataInt$pulses,
+  ## Other crops now includes other oil crops (raw): total crops minus the
+  ## explicitly shown crop categories. The Oil crops aggregate cancels out.
+  name_it(fooDataInt$tot_crops - fooDataInt$cereals - fooDataInt$pulses -
+            fooDataInt$soybean - fooDataInt$groundnuts,
           "Other crops"),
   name_it(fooDataInt$ruminant,   "Ruminant meat"),
   name_it(fooDataInt$dairy,      "Dairy"),
   name_it(fooDataInt$tot_livestk - fooDataInt$ruminant - fooDataInt$dairy,
-          "Other livestock \n products")
+          "Other livestock \n products"),
+  ## Secondary products: oils shown separately, rest aggregated
+  name_it(fooDataInt$oils,       "Oils"),
+  name_it(fooDataInt$tot_sec - fooDataInt$oils,
+          "Sugar and other \n primary processed \n products")
 )
 
 plotsReport[["foodDemand"]] <- plotBars2Var(dataPlot, years, "Food Demand", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
