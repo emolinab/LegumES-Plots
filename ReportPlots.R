@@ -62,7 +62,7 @@ data_list2 <- do.call(mbind, data_list_temp)
 
 ## Plotting functions
 
-plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = itemColors, width = 24, height = 24){
+plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = itemColors, width = 24, height = 24, highlight = NULL){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -71,6 +71,7 @@ plotBars2Var <- function(dataPlot, years, title, units, region, ncol, fileFolder
   names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Value") # Layout estándar de magclass
   dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
   dfLong$Variable <- factor(dfLong$Variable, levels = names(palette)) # fix stacking/legend order
+  dfLong$Region <- factor(dfLong$Region, levels = region) # enforce facet order (e.g. EUR first)
 
 ## Plotting and save functions
 plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
@@ -100,6 +101,15 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
          x = "Scenario", 
          fill = "Item")
 
+  ## Optional: draw a frame around one facet to highlight it (e.g. EUR)
+  if (!is.null(highlight)) {
+    hlDF <- setNames(data.frame(factor(highlight, levels = region)), facetVar)
+    plot <- plot +
+      geom_rect(data = hlDF, inherit.aes = FALSE,
+                aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
+                fill = NA, colour = "black", linewidth = 1.8)
+  }
+
     ggsave(
     filename =  paste0(fileFolder, title,".png"),
     plot = plot,
@@ -112,7 +122,7 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, width = 24, height = 24){
+plotBars3Var <- function(dataPlot, years, title, units, region, ncol, fileFolder, facetVar, palette = demandColors, width = 24, height = 24, highlight = NULL){
 
 ## Data handling
   dataVariableSingle <- dataPlot[region,,]
@@ -150,6 +160,15 @@ plot <- ggplot(dfLong, aes(x = Scenario, y = Value, fill = Variable)) +
          y = units, 
          x = "Scenario", 
          fill = "Item")
+
+  ## Optional: draw a frame around one facet to highlight it (e.g. EUR)
+  if (!is.null(highlight)) {
+    hlDF <- setNames(data.frame(factor(highlight, levels = region)), facetVar)
+    plot <- plot +
+      geom_rect(data = hlDF, inherit.aes = FALSE,
+                aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
+                fill = NA, colour = "black", linewidth = 1.8)
+  }
 
     ggsave(
     filename =  paste0(fileFolder, title,".png"),
@@ -343,7 +362,7 @@ dataPlotProd <- mbind(
   name_it(cropDataInt$Forage, "Forage")
 )
 
-plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Production", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26)
-plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (legumes)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26)
+plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Production", "Mt DM/yr", c("EUR", EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26, highlight = "EUR")
+plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (legumes)", "Mt DM/yr", c("EUR", EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26, highlight = "EUR")
 
 #####################################################################################
