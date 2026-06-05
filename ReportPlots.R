@@ -242,6 +242,33 @@ dataPlotProd <- mbind(
 )
 
 plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Production", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region")
-plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (Pulses)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts")], years, "Crop Production (Pulses)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region")
+
+#####################################################################################
+###### Crop area #####################################################################
+CropNamesArea <- c(
+  Pulses      = "Resources|Land Cover|Cropland|Croparea|Crops|Other crops|+|Pulses (million ha)",
+  Soybean     = "Resources|Land Cover|Cropland|Croparea|Crops|Oil crops|+|Soybean (million ha)",
+  Groundnuts  = "Resources|Land Cover|Cropland|Croparea|Crops|Oil crops|+|Groundnuts (million ha)",
+  Cereals     = "Resources|Land Cover|Cropland|Croparea|Crops|+|Cereals (million ha)",
+  Forage      = "Resources|Land Cover|Cropland|Croparea|+|Forage (million ha)",
+  Total_Crops = "Resources|Land Cover|Cropland|Croparea|+|Crops (million ha)"
+)
+
+cropDataArea <- data_list2[, years, c(CropNamesArea)]   
+
+cropDataAreaInt <- lapply(CropNamesArea, \(x) cropDataArea[, , x])
+
+dataPlotArea <- mbind(
+  name_it(cropDataAreaInt$Pulses,     "Pulses"),
+  name_it(cropDataAreaInt$Soybean,    "Soybean"),
+  name_it(cropDataAreaInt$Groundnuts, "Groundnuts"),
+  name_it(cropDataAreaInt$Cereals, "Cereals"),
+  name_it(cropDataAreaInt$Total_Crops - cropDataAreaInt$Pulses - cropDataAreaInt$Soybean - cropDataAreaInt$Groundnuts - cropDataAreaInt$Cereals, "Other Crops"),
+  name_it(cropDataAreaInt$Forage, "Forage")
+)
+
+plotsReport[["cropArea"]] <- plotBars2Var(dataPlotArea, years, "Crop Area", "Million ha", "EUR", ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["cropAreaPulses"]] <- plotBars2Var(dataPlotArea[,,c("Pulses", "Soybean", "Groundnuts")], years, "Crop Area (Pulses)", "Million ha", "EUR", ncol=3,fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
