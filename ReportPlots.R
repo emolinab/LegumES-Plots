@@ -115,7 +115,7 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
       plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
       axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
       axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1, size = 20),
+      axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 20, margin = margin(t = 0)),
       axis.text.y = element_text(size = 20),
       strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
       legend.position = "right",
@@ -128,10 +128,11 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
     ) +
     facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") +
     scale_x_discrete(guide = legendry::guide_axis_nested(
-                       drop_zero = FALSE,                                # draw the single 2015 bracket line
+                       drop_zero = FALSE,                                  # draw the single 2015 bracket line
                        levels_text = list(
-                         element_text(angle = 60, hjust = 1, vjust = 1), # scenario ticks: steep
-                         element_text(angle = 0,  hjust = 0.5)))) +      # year brackets: horizontal
+                         element_text(angle = 90, hjust = 0.5, vjust = 0.5, margin = margin(t = 0)), # vertical, centred, tight
+                         element_text(angle = 0,  hjust = 0.5)),           # year brackets: horizontal
+                       theme = legendry::theme_guide(spacing = unit(0, "pt")))) +  # minimal gap to plot
     labs(title = title,
          y = units, 
          x = NULL,
@@ -191,7 +192,7 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
       plot.title = element_text(face = "bold", hjust = 0.5, size = 30, margin = margin(b = 15)),
       axis.title.x = element_text(face = "bold", size = 26, margin = margin(t = 12)),
       axis.title.y = element_text(face = "bold", size = 26, margin = margin(r = 12)),
-      axis.text.x = element_text(angle = 60, hjust = 1, vjust = 1, size = 20),
+      axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5, size = 20, margin = margin(t = 0)),
       axis.text.y = element_text(size = 20),
       strip.text = element_text(size = 22, face = "bold", margin = margin(b = 8)),
       legend.position = "right",
@@ -204,10 +205,11 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
     ) +
     facet_wrap(facets = facetVar, ncol = ncol, scales = "free_y") +
     scale_x_discrete(guide = legendry::guide_axis_nested(
-                       drop_zero = FALSE,                                # draw the single 2015 bracket line
+                       drop_zero = FALSE,                                  # draw the single 2015 bracket line
                        levels_text = list(
-                         element_text(angle = 60, hjust = 1, vjust = 1), # scenario ticks: steep
-                         element_text(angle = 0,  hjust = 0.5)))) +      # year brackets: horizontal
+                         element_text(angle = 90, hjust = 0.5, vjust = 0.5, margin = margin(t = 0)), # vertical, centred, tight
+                         element_text(angle = 0,  hjust = 0.5)),           # year brackets: horizontal
+                       theme = legendry::theme_guide(spacing = unit(0, "pt")))) +  # minimal gap to plot
     labs(title = title,
          y = units, 
          x = NULL,
@@ -234,7 +236,7 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
   return(plot)
 }
 
-plotAddLine <-function(OrigPlot,dataAdd, region,title){
+plotAddLine <-function(OrigPlot,dataAdd, region,title, width = 24, height = 24){
 
   dataVariableSingle <- dataAdd[region,,]
 
@@ -572,8 +574,8 @@ dataPlotArea <- mbind(
   name_it(cropDataAreaInt$Forage, "Forage")
 )
 
-plotsReport[["cropArea"]] <- plotBars2Var(dataPlotArea, years, "Crop Area", "Million ha", "EUR", ncol=3,fileFolder = fileFolder, facetVar="Region")
-plotsReport[["cropAreaPulses"]] <- plotBars2Var(dataPlotArea[,,c("Pulses", "Soybean", "Groundnuts")], years, "Crop Area (legumes)", "Million ha", "EUR", ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["cropArea"]] <- plotBars2Var(dataPlotArea, years, "Crop Area", "Million ha", c("EUR", EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26, highlight = "EUR")
+plotsReport[["cropAreaPulses"]] <- plotBars2Var(dataPlotArea[,,c("Pulses", "Soybean", "Groundnuts")], years, "Crop Area (legumes)", "Million ha", c("EUR", EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26, highlight = "EUR")
 
 #####################################################################################
 ###### Trade #####################################################################
@@ -625,7 +627,7 @@ TradeData <- mbind(TradeData[,,c("Exports","Demand","Production")],
 
 
 plotsReport[["Trade"]] <- plotBars3Var(TradeData[,,c("Demand","Exports","Imports")], years, "Trade", "Mt DM/yr", "EUR", ncol=3, fileFolder, facetVar="Item", width = 34, height = 26, palette=tradeColors)
-plotsReport[["Trade"]] <- plotAddLine (plotsReport[["Trade"]], TradeData[,,c("Production")], "EUR" , "Trade")
+plotsReport[["Trade"]] <- plotAddLine (plotsReport[["Trade"]], TradeData[,,c("Production")], "EUR" , "Trade", width = 36, height = 26)
 
 
 
