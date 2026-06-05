@@ -53,11 +53,21 @@ demandColors <- c(
 )
 
 tradeColors <- c(
-  "Imports"       = "#E6AB02",  # green
-  "Exports"       = "#1D91C0",  # orange
-  "Demand"        = "#CAB2D6"  # purple
-
+  "Imports"       = "#E6AB02",  # Gold
+  "Exports"       = "#1D91C0",  # Cerulean
+  "Demand"        = "#CAB2D6"  # Gray
 )
+
+LUColors <- c(
+  "Cropland"       = "#ddb851",  # Gold
+  "Forest"         = "#136810",  # Cerulean
+  "Pastures"        = "#3fac39",  # Gray
+  "Urban"          = "#c18fd8",
+  "Other"          = "#ce6a6a"
+)
+
+
+
 
 ## Read and combine report.mifs
 data_list_temp <- lapply(scenarios, function(sce) {
@@ -211,6 +221,49 @@ plot <- ggplot(dfLong, aes(x = xNest, y = Value, fill = Variable)) +
                 aes(xmin = -Inf, xmax = Inf, ymin = -Inf, ymax = Inf),
                 fill = NA, colour = "black", linewidth = 1.8)
   }
+
+    ggsave(
+    filename =  paste0(fileFolder, title,".png"),
+    plot = plot,
+    width = width,
+    height = height,
+    dpi = 320,
+    units = "cm"
+  )
+
+  return(plot)
+}
+
+plotAddLine <-function(OrigPlot,dataAdd, region,title){
+
+  dataVariableSingle <- dataAdd[region,,]
+
+  dataVariableSingleHist <-setYears(dataVariableSingle[,years[1],"SSP1"],years[2])
+  getNames(dataVariableSingleHist) <- gsub("^SSP1\\.", paste0(years[1], "."), getNames(dataVariableSingleHist))
+
+  dataVariableSingle <- mbind(dataVariableSingleHist, dataVariableSingle[,years[1],,invert = TRUE])
+
+  dfLong <- as.data.frame(dataVariableSingle, rev = TRUE)[,c("Region","Year","Data1","Data2","Data3","Value")]
+  names(dfLong) <- c("Region", "Year", "Scenario", "Variable","Item","Value") # Layout estándar de magclass
+  dfLong$Year <- as.numeric(gsub("y", "", as.character(dfLong$Year)))
+
+# --- xNest--
+  dfLong$Period <- ifelse(as.character(dfLong$Scenario) == "2015", "2015", "2050")
+  tickLab       <- ifelse(as.character(dfLong$Scenario) == "2015", "", as.character(dfLong$Scenario))
+  dfLong$xNest  <- factor(paste(tickLab, dfLong$Period, sep = "@"),
+                          levels = c("@2015", paste0(scenarios, "@2050")))
+
+  # --- xNest + grouping---
+  plot <- OrigPlot +
+          geom_line(data = dfLong, aes(x = xNest, y = Value, color = Variable, group = 1), 
+                    linewidth = 1, inherit.aes = FALSE) +
+          geom_point(data = dfLong, aes(x = xNest, y = Value, color = Variable), 
+                      size = 3, inherit.aes = FALSE) + 
+                      scale_color_manual(name = "", values = setNames("black", unique(dfLong$Variable))) +
+                      theme(legend.position = "right")+ 
+                      guides( fill = guide_legend(order = 1),   
+                             color = guide_legend(order = 2)   
+          )
 
     ggsave(
     filename =  paste0(fileFolder, title,".png"),
@@ -572,4 +625,33 @@ TradeData <- mbind(TradeData[,,c("Exports","Demand","Production")],
 
 
 plotsReport[["Trade"]] <- plotBars3Var(TradeData[,,c("Demand","Exports","Imports")], years, "Trade", "Mt DM/yr", "EUR", ncol=3, fileFolder, facetVar="Item", width = 34, height = 26, palette=tradeColors)
-##################################################################################### ,"Imports"
+plotsReport[["Trade"]] <- plotAddLine (plotsReport[["Trade"]], TradeData[,,c("Production")], "EUR" , "Trade")
+
+
+
+
+#####################################################################################
+
+###### Land Use types #####################################################################
+LandUseNames <- c(
+  Cropland      = "Resources|Land Cover|+|Cropland (million ha)",
+  Forest        = "Resources|Land Cover|+|Forest (million ha)",
+  Pastures      = "Resources|Land Cover|+|Pastures and Rangelands (million ha)",
+  Urban         = "Resources|Land Cover|Cropland|Croparea|Crops|+|Cereals (million ha)",
+  Other         = "Resources|Land Cover|+|Urban Area (million ha)"
+ )
+
+LandUseArea <- data_list2[, years, c(LandUseNames)]   
+
+LandUseAreaInt <- lapply(LandUseNames, \(x) LandUseArea[, , x])
+
+getNames(LandUseArea) <- stri_replace_all_fixed(
+  str = getNames(LandUseArea),          
+  pattern = LandUseNames,                
+  replacement = names(LandUseNames),    
+  vectorize_all = FALSE
+)
+
+plotsReport[["LandArea"]] <- plotBars2Var(LandUseArea, years, " Land Area", "Million ha", c("EUR",EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", palette = LUColors, width = 40)
+
+#####################################################################################
