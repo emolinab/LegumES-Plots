@@ -175,6 +175,7 @@ foodNames <- c(
   ruminant    = "Demand|Livestock products|+|Ruminant meat (Mt DM/yr)",
   dairy       = "Demand|Livestock products|+|Dairy (Mt DM/yr)",
   tot_livestk = "Demand|Food|+|Livestock products (Mt DM/yr)",
+  fish        = "Demand|Food|+|Fish (Mt DM/yr)",
   oils        = "Demand|Food|Secondary products|+|Oils (Mt DM/yr)",
   tot_sec     = "Demand|Food|+|Secondary products (Mt DM/yr)"
 )
@@ -199,7 +200,8 @@ dataPlot <- mbind(
           "Other crops"),
   name_it(fooDataInt$ruminant,   "Ruminant meat"),
   name_it(fooDataInt$dairy,      "Dairy"),
-  name_it(fooDataInt$tot_livestk - fooDataInt$ruminant - fooDataInt$dairy,
+  ## Other livestock products, with Fish folded in (per request)
+  name_it(fooDataInt$tot_livestk - fooDataInt$ruminant - fooDataInt$dairy + fooDataInt$fish,
           "Other livestock \n products"),
   ## Secondary products: oils shown separately, rest aggregated
   name_it(fooDataInt$oils,       "Oils"),
@@ -209,6 +211,47 @@ dataPlot <- mbind(
 
 plotsReport[["foodDemand"]] <- plotBars2Var(dataPlot, years, "Food Demand", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
 plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean","Groundnuts")], years, "Food Demand for Legumes", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
+
+#####################################################################################
+
+
+###### Per-capita calorie supply (same categories as Food Demand) #####################
+calNames <- c(
+  pulses      = "Nutrition|Calorie Supply|Crops|Other crops|+|Pulses (kcal/capita/day)",
+  soybean     = "Nutrition|Calorie Supply|Crops|Oil crops|+|Soybean (kcal/capita/day)",
+  groundnuts  = "Nutrition|Calorie Supply|Crops|Oil crops|+|Groundnuts (kcal/capita/day)",
+  cereals     = "Nutrition|Calorie Supply|Crops|+|Cereals (kcal/capita/day)",
+  tot_crops   = "Nutrition|Calorie Supply|+|Crops (kcal/capita/day)",
+  ruminant    = "Nutrition|Calorie Supply|Livestock products|+|Ruminant meat (kcal/capita/day)",
+  dairy       = "Nutrition|Calorie Supply|Livestock products|+|Dairy (kcal/capita/day)",
+  tot_livestk = "Nutrition|Calorie Supply|+|Livestock products (kcal/capita/day)",
+  fish        = "Nutrition|Calorie Supply|+|Fish (kcal/capita/day)",
+  oils        = "Nutrition|Calorie Supply|Secondary products|+|Oils (kcal/capita/day)",
+  tot_sec     = "Nutrition|Calorie Supply|+|Secondary products (kcal/capita/day)"
+)
+
+calData <- data_list2[, years, c(calNames)]
+calDataInt <- lapply(calNames, \(x) calData[, , x])
+
+dataPlotCal <- mbind(
+  name_it(calDataInt$pulses,     "Pulses"),
+  name_it(calDataInt$soybean,    "Soybean"),
+  name_it(calDataInt$groundnuts, "Groundnuts"),
+  name_it(calDataInt$cereals,    "Cereals"),
+  name_it(calDataInt$tot_crops - calDataInt$cereals - calDataInt$pulses -
+            calDataInt$soybean - calDataInt$groundnuts,
+          "Other crops"),
+  name_it(calDataInt$ruminant,   "Ruminant meat"),
+  name_it(calDataInt$dairy,      "Dairy"),
+  ## Other livestock products, with Fish folded in (per request)
+  name_it(calDataInt$tot_livestk - calDataInt$ruminant - calDataInt$dairy + calDataInt$fish,
+          "Other livestock \n products"),
+  name_it(calDataInt$oils,       "Oils"),
+  name_it(calDataInt$tot_sec - calDataInt$oils,
+          "Sugar and other \n primary processed \n products")
+)
+
+plotsReport[["calorieSupply"]] <- plotBars2Var(dataPlotCal, years, "Per-Capita Calorie Supply", "kcal/capita/day", "EUR", ncol=3, fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
 
