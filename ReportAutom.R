@@ -76,7 +76,38 @@ variables_magpie <- c(
 "Resources|Land Cover|+|Forest (million ha)",
 "Resources|Land Cover|+|Other Land (million ha)",
 "Resources|Land Cover|+|Pastures and Rangelands (million ha)",
-"Resources|Land Cover|+|Urban Area (million ha)"
+"Resources|Land Cover|+|Urban Area (million ha)",
+
+## --- Variables additionally required by ReportPlots.R (bar plots) ---
+## Food Demand plot (plotBars2Var)
+"Demand|Food|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+"Demand|Food|Crops|+|Oil crops (Mt DM/yr)",
+"Demand|Food|Crops|+|Cereals (Mt DM/yr)",
+"Demand|Food|+|Crops (Mt DM/yr)",
+"Demand|Livestock products|+|Ruminant meat (Mt DM/yr)",
+"Demand|Livestock products|+|Dairy (Mt DM/yr)",
+"Demand|Food|+|Livestock products (Mt DM/yr)",
+## Pulses Demand plot (plotBars3Var) - Pulses by demand category
+"Demand|Material|Crops|Other crops|+|Pulses (Mt DM/yr)",
+"Demand|Seed|Crops|Other crops|+|Pulses (Mt DM/yr)",
+"Demand|Processing|Crops|Other crops|+|Pulses (Mt DM/yr)",
+"Demand|Bioenergy|Crops|Other crops|+|Pulses (Mt DM/yr)",
+## Pulses Demand plot - Soybean by demand category
+"Demand|Material|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+"Demand|Seed|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+"Demand|Bioenergy|Crops|Oil crops|+|Soybean (Mt DM/yr)",
+## Pulses Demand plot - Groundnuts by demand category
+"Demand|Feed|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+"Demand|Material|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+"Demand|Seed|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+"Demand|Processing|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+"Demand|Bioenergy|Crops|Oil crops|+|Groundnuts (Mt DM/yr)",
+## Pulses Demand plot - Forage by demand category
+"Demand|Food|+|Forage (Mt DM/yr)",
+"Demand|Seed|+|Forage (Mt DM/yr)",
+"Demand|Material|+|Forage (Mt DM/yr)",
+"Demand|Processing|+|Forage (Mt DM/yr)",
+"Demand|Bioenergy|+|Forage (Mt DM/yr)"
 )
 
 
