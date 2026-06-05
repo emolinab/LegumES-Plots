@@ -208,7 +208,7 @@ dataPlot <- mbind(
 )
 
 plotsReport[["foodDemand"]] <- plotBars2Var(dataPlot, years, "Food Demand", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
-plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean","Groundnuts")], years, "Food Demand Pulses", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
+plotsReport[["foodDemandPulses"]] <- plotBars2Var(dataPlot[,,c("Pulses","Soybean","Groundnuts")], years, "Food Demand for Legumes", "Mt DM/yr", "EUR",ncol=3,fileFolder = fileFolder, facetVar="Region")
 
 #####################################################################################
 
@@ -282,6 +282,6 @@ dataPlotProd <- mbind(
 )
 
 plotsReport[["cropProduction"]] <- plotBars2Var(dataPlotProd, years, "Crop Production", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26)
-plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (Pulses)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26)
+plotsReport[["cropProductionPulses"]] <- plotBars2Var(dataPlotProd[,,c("Pulses", "Soybean", "Groundnuts","Forage")], years, "Crop Production (legumes)", "Mt DM/yr", EUR_Regions, ncol=3,fileFolder = fileFolder, facetVar="Region", width = 34, height = 26)
 
 #####################################################################################
