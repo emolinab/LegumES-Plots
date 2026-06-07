@@ -4,6 +4,7 @@ library(dplyr)
 library(patchwork)
 library(officer)
 
+rm(data_list2)
 scenarios <- c("SSP1","SSP2","SSP3","SSP4","SSP5") 
 
 
@@ -107,7 +108,9 @@ variables_magpie <- c(
 "Demand|Seed|+|Forage (Mt DM/yr)",
 "Demand|Material|+|Forage (Mt DM/yr)",
 "Demand|Processing|+|Forage (Mt DM/yr)",
-"Demand|Bioenergy|+|Forage (Mt DM/yr)"
+"Demand|Bioenergy|+|Forage (Mt DM/yr)",
+## Biodiversity 
+"Biodiversity|Shannon crop area diversity index (unitless)"
 )
 
 
