@@ -654,6 +654,33 @@ getNames(LandUseArea) <- stri_replace_all_fixed(
   vectorize_all = FALSE
 )
 
-plotsReport[["LandArea"]] <- plotBars2Var(LandUseArea, years, " Land Area", "Million ha", c("EUR",EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", palette = LUColors, width = 40)
+plotsReport[["LandArea"]] <- plotBars2Var(LandUseArea, years, "Land Area", "Million ha", c("EUR",EUR_Regions), ncol=3,fileFolder = fileFolder, facetVar="Region", palette = LUColors, width = 40)
+
+#####################################################################################
+
+###### Employment #####################
+
+EmpColors <- c(
+  "Pulses"      = "#DFC27D",  # light khaki
+  "Other Crops" = "#238B45",  # strong green (legumes)
+  "Livestock products"   = "#969696"  # medium grey (calibration)
+
+)
+
+itemNames <- list(Pulses = c("puls_pro","soybean","groundnut","foddr"),
+                  Other_crops = c("begr","betr","cassav_sp","cottn_pro", "maiz",
+                                  "oilpalm","others","potato","rapeseed", 
+                                  "rice_pro", "sugr_beet", "sugr_cane", "sunflower", "tece", "trce"),
+                  Livestock =c("livst_rum","livst_pig","livst_egg","livst_milk"))
+
+employmentData<-readRDS(file.path("DataRunsLegumES", "employment_detail_ssps.rds"))[,years,]
+
+dataPlotEmp <- mbind(
+  name_it(dimSums(employmentData[,,itemNames[["Pulses"]]],dim=3.2),     "Pulses"),
+  name_it(dimSums(employmentData[,,itemNames[["Other_crops"]]],dim=3.2), "Other Crops"),
+  name_it(dimSums(employmentData[,,itemNames[["Livestock"]]],dim=3.2), "Livestock products")
+)
+
+plotsReport[["Employment"]] <- plotBars2Var(dataPlotEmp, years, "Employment", "million of people", c("EUR",EUR_Regions), ncol=3, fileFolder = fileFolder, facetVar="Region", palette = EmpColors, highlight = "EUR",  width = 40)
 
 #####################################################################################
