@@ -23,7 +23,7 @@ eu_regions <- c("DEU", "EUC", "EUN", "EUS", "EUW")
 
 employment_accum <- suppressWarnings(
   do.call(rbind, lapply(scenarios, function(sce) {
-    agEmployment(fulldata[sce], detail = "byProduct", level = "regglo")[,, legumes] |>
+    agEmployment(fulldata[sce], detail = "byProduct", level = "regglo") |>
       (\(emp) mbind(emp, setCells(dimSums(emp[eu_regions ,,], dim = 1), "EUR"), setCells(dimSums(emp, dim = 1), "World")))() |>
       as.data.frame() |>
       transform(scenario = runNames[sce])
@@ -74,7 +74,7 @@ for(crop in crops){
     panel.grid.major = element_line(color = "grey85", linewidth = 0.5),
     panel.grid.minor = element_line(color = "grey95", linewidth = 0.25))+  
   labs(
-    title = paste0("Labor|Employment|Agricultural employment|+|Crop production|+|",cropsN[crop],"|"),
+    title = paste0("Labor|Employment|Agricultural employment|+|Crop production|+|",cropsN[crop]),
     x = "Year",
     y = "mio people",
     color = "Model: MAgPIE"
@@ -100,8 +100,8 @@ for(crop in crops){
 
 }
 
-pl <- plotEmployment(employment_accum, Regions = c("DEU", "EUC", "EUN", "EUS", "EUW"), crops = legumes, tag="subregions")
-pl2 <- plotEmployment(employment_accum, Regions = c("EUR"), crops = legumes, tag="EU")
+pl <- plotEmployment(employment_accum[,, legumes], Regions = c("DEU", "EUC", "EUN", "EUS", "EUW"), crops = legumes, tag="subregions")
+pl2 <- plotEmployment(employment_accum[,, legumes], Regions = c("EUR"), crops = legumes, tag="EU")
 
 # employment_accum <- suppressWarnings(lapply(scenarios, function(sce) {
 #   df <- round(agEmployment(fulldata[sce], detail = "byProduct", level = "regglo"), 3) |>

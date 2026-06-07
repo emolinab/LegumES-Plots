@@ -637,8 +637,8 @@ LandUseNames <- c(
   Cropland      = "Resources|Land Cover|+|Cropland (million ha)",
   Forest        = "Resources|Land Cover|+|Forest (million ha)",
   Pastures      = "Resources|Land Cover|+|Pastures and Rangelands (million ha)",
-  Urban         = "Resources|Land Cover|Cropland|Croparea|Crops|+|Cereals (million ha)",
-  Other         = "Resources|Land Cover|+|Urban Area (million ha)"
+  Urban         = "Resources|Land Cover|+|Urban Area (million ha)",
+  Other         = "Resources|Land Cover|+|Other Land (million ha)"
  )
 
 LandUseArea <- data_list2[, years, c(LandUseNames)]   
