@@ -103,24 +103,16 @@ for(crop in crops){
 pl <- plotEmployment(employment_accum[,, legumes], Regions = c("DEU", "EUC", "EUN", "EUS", "EUW"), crops = legumes, tag="subregions")
 pl2 <- plotEmployment(employment_accum[,, legumes], Regions = c("EUR"), crops = legumes, tag="EU")
 
-# employment_accum <- suppressWarnings(lapply(scenarios, function(sce) {
-#   df <- round(agEmployment(fulldata[sce], detail = "byProduct", level = "regglo"), 3) |>
-#     (\(x) x[,, legumes])() |>
-#     as.data.frame()
-#   df$scenario <- sce
-#   df
-# }) |> do.call(rbind, args = _))
 
-
-
-
-
+#### Produces the data to use in plots in ReportPlots.R
+# suppressWarnings(rm(emp_list))
 # for(sce in scenarios){
-#   employment <- agEmployment(fulldata[sce],detail="byProduct",level="regglo")[,,legumes]
-#   employment <- mbind(employment,setCells(dimSums(employment[,,c("DEU" "EUC" "EUN" "EUS" "EUW")] ,dim = 1),"EUR"))
-#   employment <- as.data.frame(employment)
-#   employment$scenario <- sce
-#   employment_list[[sce]] <- employment
+
+#   emp<- agEmployment(fulldata[sce], detail = "byProduct", level = "regglo")
+#   getNames(emp)<-paste0(sce,".",getNames(emp))
+#   emp <-mbind(emp, setCells(dimSums(emp[eu_regions ,,],dim=1),"EUR"))
+#   emp_list<-if(exists("emp_list")) mbind(emp_list,emp) else emp
 # }
 
-# employment_accum <- do.call(rbind, employment_list)
+
+
