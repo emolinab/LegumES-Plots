@@ -634,6 +634,82 @@ plotsReport[["Trade"]] <- plotAddLine (plotsReport[["Trade"]], TradeData[,,c("Pr
 
 #####################################################################################
 
+###### Global Demand for Agricultural Products ######################################
+## Same faceted layout as the Trade figure (one facet per commodity), but here the
+## stacked elements within each bar are the world REGIONS, so the full bar height is
+## the World total demand for that commodity. EUR replaces the five EU subregions.
+## Commodity definitions match the Trade figure: Crops = full crop total,
+## Oils = secondary (processed) oils. Note that, as in the Trade figure, the Crops
+## facet still contains the legumes shown separately in the Pulses/Soybeans facets;
+## this is cross-facet overlap, not within-bar double counting.
+DemandNames <- c(
+  Livestock = "Demand|++|Livestock products (Mt DM/yr)",
+  Crops     = "Demand|++|Crops (Mt DM/yr)",
+  Oilcakes  = "Demand|Secondary products|+|Oilcakes (Mt DM/yr)",
+  Oils      = "Demand|Secondary products|+|Oils (Mt DM/yr)",
+  Pulses    = "Demand|Crops|Other crops|+|Pulses (Mt DM/yr)",
+  Soybeans  = "Demand|Crops|Oil crops|+|Soybean (Mt DM/yr)"
+)
+
+## Aggregate world regions: EUR stands in for DEU/EUC/EUN/EUS/EUW.
+worldRegions <- c("EUR", "NEU", "REF", "USA", "CAZ", "LAM",
+                  "MEA", "SSA", "CHA", "IND", "JPN", "OAS")
+
+## Stacking + legend order follows this vector; colours grouped by world area
+## (Europe greens/purples, Americas blues, Africa+MEA warm, Asia reds/yellows).
+regionColors <- c(
+  "EUR" = "#1B9E77",  # teal-green (highlight)
+  "NEU" = "#66C2A5",  # light green
+  "REF" = "#6A3D9A",  # purple
+  "USA" = "#2166AC",  # blue
+  "CAZ" = "#92C5DE",  # light blue
+  "LAM" = "#A6CEE3",  # pale blue
+  "MEA" = "#F781BF",  # pink
+  "SSA" = "#B15928",  # brown
+  "CHA" = "#E31A1C",  # red
+  "IND" = "#FF7F00",  # orange
+  "JPN" = "#FDBF6F",  # light orange
+  "OAS" = "#FFD92F"   # yellow
+)
+
+DemandData <- data_list2[worldRegions, years, c(DemandNames)]
+DemandData[DemandData < 0] <- 0   # demand is non-negative; guard tiny balanceflow artefacts
+
+getNames(DemandData) <- stri_replace_all_fixed(
+  str = getNames(DemandData),
+  pattern = DemandNames,
+  replacement = names(DemandNames),
+  vectorize_all = FALSE
+)
+## getNames is now "<scenario>.<commodity>" with region in the spatial dim.
+
+## Fold the region (spatial dim) into the name dim so it becomes the fill in
+## plotBars3Var, leaving a single "World" spatial cell. Result name layout:
+## "<scenario>.<region>.<commodity>" = Data1(scenario).Data2(fill).Data3(facet).
+foldRegionToFill <- function(x) {
+  res <- NULL
+  for (r in getItems(x, dim = 1)) {
+    sub <- x[r, , ]
+    getItems(sub, dim = 1) <- "World"
+    getNames(sub) <- sub("\\.", paste0(".", r, "."), getNames(sub))  # insert region after scenario
+    res <- mbind(res, sub)
+  }
+  res
+}
+DemandDataFill <- foldRegionToFill(DemandData)
+
+plotsReport[["globalDemand"]] <- plotBars3Var(DemandDataFill, years,
+  "Global Demand for Agricultural Products", "Mt DM/yr", "World",
+  ncol = 3, fileFolder, facetVar = "Item",
+  palette = regionColors, width = 36, height = 26)
+
+## plotBars3Var hardcodes the legend title to "Item"; here the fill is region.
+plotsReport[["globalDemand"]] <- plotsReport[["globalDemand"]] + labs(fill = "Region")
+ggsave(filename = paste0(fileFolder, "Global Demand for Agricultural Products.png"),
+       plot = plotsReport[["globalDemand"]], width = 36, height = 26, dpi = 320, units = "cm")
+
+#####################################################################################
+
 ###### Land Use types #####################################################################
 LandUseNames <- c(
   Cropland      = "Resources|Land Cover|+|Cropland (million ha)",
